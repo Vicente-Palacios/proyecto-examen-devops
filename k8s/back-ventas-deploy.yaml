@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: back-ventas
+  namespace: default
+  labels:
+    app: back-ventas
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: back-ventas
+  template:
+    metadata:
+      labels:
+        app: back-ventas
+    spec:
+      containers:
+      - name: back-ventas
+        image: 767397950209.dkr.ecr.us-east-1.amazonaws.com/back-ventas:latest
+        ports:
+        - containerPort: 3002
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: back-ventas-service
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3002
+    targetPort: 3002
+  selector:
+    app: back-ventas

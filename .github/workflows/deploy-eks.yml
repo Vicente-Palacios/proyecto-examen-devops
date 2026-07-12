@@ -1,0 +1,68 @@
+name: CI/CD Proyecto Semestral EKS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout del codigo
+      uses: actions/checkout@v4  # Actualizado a v4 para evitar error 128 y Node.js deprecado
+
+    - name: Configurar credenciales de AWS
+      uses: aws-actions/configure-aws-credentials@v4  # Actualizado a v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: us-east-1
+
+    - name: Iniciar sesion en Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2  # Actualizado a v2 para corregir el warning de enmascaramiento
+
+    # ==========================================
+    # ETAPA: CONSTRUCCIÓN Y PUSH DE IMÁGENES DOCKER
+    # ==========================================
+    - name: Compilar y subir Front Despacho a ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build -t $ECR_REGISTRY/front-despacho:latest ./front_despacho
+        docker push $ECR_REGISTRY/front-despacho:latest
+
+    - name: Compilar y subir Back Despachos a ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build -t $ECR_REGISTRY/back-despachos:latest ./back-despachos
+        docker push $ECR_REGISTRY/back-despachos:latest
+
+    - name: Compilar y subir Back Ventas a ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build -t $ECR_REGISTRY/back-ventas:latest ./back-ventas
+        docker push $ECR_REGISTRY/back-ventas:latest
+
+    # ==========================================
+    # ETAPA: DESPLIEGUE AUTOMATIZADO EN AMAZON EKS
+    # ==========================================
+    - name: Actualizar conexion con el cluster EKS
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name cluster-semestral
+
+    - name: Desplegar manifiestos en Kubernetes
+      run: |
+        kubectl apply -f k8s/back-despachos-deploy.yaml
+        kubectl apply -f k8s/back-ventas-deploy.yaml
+        kubectl apply -f k8s/front-despacho-deploy.yaml
+
+    - name: Forzar reinicio para actualizar los pods
+      run: |
+        kubectl rollout restart deployment/back-despachos
+        kubectl rollout restart deployment/back-ventas
+        kubectl rollout restart deployment/front-despacho

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-despacho
+  namespace: default
+  labels:
+    app: front-despacho
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: front-despacho
+  template:
+    metadata:
+      labels:
+        app: front-despacho
+    spec:
+      containers:
+      - name: front-despacho
+        image: 767397950209.dkr.ecr.us-east-1.amazonaws.com/front-despacho:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+          requests:
+            cpu: "250m"
+            memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: front-despacho-service
+  namespace: default
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: front-despacho
