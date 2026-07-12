@@ -20,7 +20,7 @@ spec:
         # ID de cuenta de AWS
         image: 767397950209.dkr.ecr.us-east-1.amazonaws.com/back-despachos:latest
         ports:
-        - containerPort: 3001
+        - containerPort: 8081
         resources:
           limits:
             cpu: "500m"
@@ -29,13 +29,13 @@ spec:
             cpu: "250m"
             memory: "256Mi"
         env:
-        - name: DB_HOST
+        - name: DB_ENDPOINT
           value: "mysql-service" # <--- Kubernetes enrutará el tráfico automáticamente aquí
         - name: DB_PORT
           value: "3306"
         - name: DB_NAME
           value: "tu_base_datos"
-        - name: DB_USER
+        - name: DB_USERNAME
           value: "root"
         - name: DB_PASSWORD
           value: "root"
@@ -49,6 +49,6 @@ spec:
   type: ClusterIP
   ports:
   - port: 3001
-    targetPort: 3001
+    targetPort: 8081
   selector:
     app: back-despachos
