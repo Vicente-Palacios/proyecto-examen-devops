@@ -28,6 +28,17 @@ spec:
           requests:
             cpu: "250m"
             memory: "256Mi"
+        env:
+        - name: DB_HOST
+          value: "mysql-service" # <--- Kubernetes enrutará el tráfico automáticamente aquí
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          value: "tu_base_datos"
+        - name: DB_USER
+          value: "root"
+        - name: DB_PASSWORD
+          value: "root"
 ---
 apiVersion: v1
 kind: Service
